@@ -215,7 +215,7 @@ class HintDistributor(ABC):
         if debug.debug_level() > 1:
             print("> Num pickups per asset:")
             for asset, pickups in hint_initial_pickups.items():
-                print(f"* {asset}: {len(pickups)} pickups")
+                print(f"* {asset.as_string}: {len(pickups)} pickups")
             print("> Done.")
 
         all_pickup_indices = [node.pickup_index for node in graph.nodes if node.pickup_index is not None]

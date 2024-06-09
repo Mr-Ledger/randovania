@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 def debug_print_collect_event(event: WorldGraphNode) -> None:
     if debug.debug_level() > 0:
-        print(f"\n--> Collecting {event.identifier}")
+        print(f"\n--> Collecting {event.name}")
 
 
 def print_retcon_loop_start(
@@ -36,7 +36,7 @@ def print_retcon_loop_start(
         print("\n===============================")
         print(
             f"\n>>> {player.name}: "
-            f"From {reach.state.node.identifier}, "
+            f"From {reach.state.node.name}, "
             f"{sum(1 for n in reach.nodes if reach.is_reachable_node(n))} reachable nodes, "
             f"{sum(1 for n in reach.nodes if reach.is_safe_node(n))} safe nodes, "
             f"{len(current_uncollected.indices)} open pickup indices, "
@@ -46,7 +46,7 @@ def print_retcon_loop_start(
         if debug.debug_level() > 2:
             print("\nCurrent reach:")
             for node in reach.nodes:
-                print(f"[{reach.is_reachable_node(node)!s:>5}, {reach.is_safe_node(node)!s:>5}] " f"{node.identifier}")
+                print(f"[{reach.is_reachable_node(node)!s:>5}, {reach.is_safe_node(node)!s:>5}] " f"{node.name}")
 
 
 def print_new_resources(
@@ -58,7 +58,7 @@ def print_new_resources(
         for index, count in seen_count.items():
             if count == 1:
                 node = find_node_with_resource(index, world_graph.nodes)
-                print(f"-> New {label}: {node.identifier.as_string}")
+                print(f"-> New {label}: {node.name}")
 
 
 def print_new_node_identifiers(seen_count: dict[NodeIdentifier, int], label: str) -> None:

@@ -485,7 +485,7 @@ def pickup_placement_spoiler_entry(
 ) -> str:
     node_provider = index_owner.world_graph.node_provider
     if hint_identifier is not None:
-        hint_string = f" with hint at {node_provider.node_by_identifier(hint_identifier).identifier}"
+        hint_string = f" with hint at {node_provider.node_by_identifier(hint_identifier).name}"
     else:
         hint_string = ""
 
@@ -494,6 +494,6 @@ def pickup_placement_spoiler_entry(
         f"{location_owner.name}'s " if add_indices else "",
         action.name,
         f"{index_owner.name}'s " if add_indices else "",
-        pickup_node.identifier,
+        pickup_node.name,
         hint_string,
     )
