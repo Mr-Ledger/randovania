@@ -188,7 +188,7 @@ class ResolverReach:
                 continue
             if (
                 node.is_resource_node()
-                and node.can_collect(context, self._energy_at_node[node.node_index])
+                and node.should_collect(context)
                 and node.requirement_to_collect.satisfied(context, self._energy_at_node[node.node_index])
             ):
                 yield node

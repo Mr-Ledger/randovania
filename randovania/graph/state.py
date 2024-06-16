@@ -149,12 +149,12 @@ class State:
         :param new_energy: How much energy you should have when collecting this resource
         :return:
         """
-
-        if not node.should_collect(self.node_context()) and node.requirement_to_collect:
+        context = self.node_context()
+        if not (node.should_collect(context) and node.requirement_to_collect.satisfied(context, new_energy)):
             raise ValueError(f"Trying to collect an uncollectable node'{node}'")
 
         new_resources = self.resources.duplicate()
-        new_resources.add_resource_gain(node.resource_gain_on_collect(self.node_context()))
+        new_resources.add_resource_gain(node.resource_gain_on_collect(context))
 
         energy = new_energy
         if _energy_tank_difference(new_resources, self.resources, self.resource_database) > 0:

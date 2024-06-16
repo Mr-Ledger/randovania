@@ -32,7 +32,7 @@ def filter_pickup_nodes(nodes: Iterator[WorldGraphNode]) -> Iterator[WorldGraphN
 def _filter_collectable(resource_nodes: Iterator[WorldGraphNode], reach: GeneratorReach) -> Iterator[WorldGraphNode]:
     context = reach.node_context()
     for resource_node in resource_nodes:
-        if resource_node.should_collect(context) and resource_node.requirement_to_collect().satisfied(
+        if resource_node.should_collect(context) and resource_node.requirement_to_collect.satisfied(
             context, reach.state.energy
         ):
             yield resource_node

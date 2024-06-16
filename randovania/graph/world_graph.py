@@ -11,6 +11,7 @@ from randovania.game_description.db.hint_node import HintNode
 from randovania.game_description.db.node import NodeContext
 from randovania.game_description.db.node_provider import NodeProvider
 from randovania.game_description.db.pickup_node import PickupNode
+from randovania.game_description.db.resource_node import ResourceNode
 from randovania.game_description.db.teleporter_network_node import TeleporterNetworkNode
 from randovania.game_description.requirements.base import Requirement
 from randovania.game_description.requirements.requirement_and import RequirementAnd
@@ -73,7 +74,7 @@ class WorldGraphNode:
     """
     A requirement that must be satisfied before being able to collect
     """
-    requirement_to_collect: Requirement | None
+    requirement_to_collect: Requirement
 
     """The pickup index associated with this node."""
     pickup_index: PickupIndex | None
@@ -89,17 +90,14 @@ class WorldGraphNode:
     def is_resource_node(self) -> bool:
         return len(self.resource_gain) > 0
 
-    def can_collect(self, context: NodeContext, energy: int) -> bool:
-        should_collect = False
+    def should_collect(self, context: NodeContext) -> bool:
+        result = False
 
         for resource, _ in self.resource_gain:
             if not context.has_resource(resource):
-                should_collect = True
+                result = True
 
-        if should_collect and self.requirement_to_collect is not None:
-            return self.requirement_to_collect.satisfied(context, energy)
-
-        return should_collect
+        return result
 
     def has_all_resources(self, context: NodeContext) -> bool:
         for resource, _ in self.resource_gain:
@@ -179,7 +177,7 @@ def _add_dock_connections(
         back_lock = back_weakness.lock
 
     # Requirements needed to break the lock. Both locks if relevant
-    assert node.requirement_to_collect is None  # DockNodes shouldn't have this set
+    assert node.requirement_to_collect == Requirement.trivial()  # DockNodes shouldn't have this set
     requirement_to_collect = Requirement.trivial()
 
     # Requirements needed to open and cross the dock.
@@ -223,8 +221,6 @@ def _add_dock_connections(
                 raise RuntimeError(f"Unknown lock type: {back_lock.lock_type}")
 
     final_requirement = RequirementAnd(requirement_parts)
-    if requirement_to_collect == Requirement.trivial():
-        requirement_to_collect = None
     node.requirement_to_collect = requirement_to_collect
 
     return NodeConnection(target_node, final_requirement, final_requirement)
@@ -252,7 +248,7 @@ def _connections_from(
             requirement_to_leave = ResourceRequirement.simple(NodeResourceInfo.from_node(node, context))
 
     if isinstance(node.original_node, HintNode):
-        requirement_to_leave = node.original_node.requirement_to_collect
+        requirement_to_leave = node.original_node.requirement_to_collect()
 
     elif isinstance(node.original_node, TeleporterNetworkNode):
         raise NotImplementedError
@@ -302,6 +298,10 @@ def create_graph(
 
         node_index = len(nodes)
         resource_gain: list[ResourceQuantity] = []
+        requirement_to_collect = Requirement.trivial()
+
+        if isinstance(original_node, ResourceNode):
+            requirement_to_collect = original_node.requirement_to_collect()
 
         if isinstance(original_node, EventNode):
             resource_gain.append((original_node.event, 1))
@@ -321,7 +321,7 @@ def create_graph(
                 heal=original_node.heal,
                 connections=[],  # to be filled later
                 resource_gain=resource_gain,
-                requirement_to_collect=None,
+                requirement_to_collect=requirement_to_collect,
                 pickup_index=pickup_index,
                 pickup_entry=pickup_entry,
                 original_node=original_node,
@@ -337,9 +337,6 @@ def create_graph(
     for node in nodes:
         if isinstance(node.original_node, HintNode | PickupNode):
             node.resource_gain.append((NodeResourceInfo.from_node(node, context), 1))
-
-        if isinstance(node.original_node, HintNode):
-            node.requirement_to_collect = node.original_node.requirement_to_collect
 
         node.connections.extend(
             _connections_from(
